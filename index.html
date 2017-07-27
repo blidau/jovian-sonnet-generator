@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html prefix="dc: http://purl.org/dc/terms/ og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# cc: http://creativecommons.org/ns#" lang="en-AU">
+   <head>
+      <meta charset="UTF-8" />
+      <title>Jovian Sonnet Generator</title>
+       <link href="https://fonts.googleapis.com/css?family=Domine" rel="stylesheet" />
+      <!-- Scripts -->
+      <script type="text/javascript">
+         "use strict";
+         function clear(evt) {
+            document.getElementById("title").innerHTML = "";
+            document.getElementById("input-title").value = "";
+            for (var i = 1; i < 15; i++) {
+               document.getElementById("input-line-" + i).value = "";
+               document.getElementById("word-spacing-line-" + i).value = "0";
+               document.getElementById("text-path-" + i).setAttribute("style", "word-spacing: 0px;");
+               document.getElementById("text-path-" + i).innerHTML = "";
+            }
+            evt.preventDefault();
+         }
+         function updatePageTitle() {
+            var title = document.getElementById("title");
+            title.innerHTML = this.value;
+         }
+         function updateLine() {
+            var inputID = this.id.split("-").pop();
+            var textLine = document.getElementById("text-path-" + inputID);
+            textLine.innerHTML = this.value;
+         }
+         function updateWordSpacing() {
+            var inputID = this.id.split("-").pop();
+            var textLine = document.getElementById("text-path-" + inputID);
+            textLine.setAttribute("style", "word-spacing:" + this.value + "px;");
+         }
+         function saveSVG() {
+            var svg = document.getElementById("sonnet");
+            var serializer = new XMLSerializer();
+            var xmlString = serializer.serializeToString(svg);
+            xmlString = '<?xml version="1.0" encoding="utf-8"?>\n' + xmlString;
+            var blob = new Blob([xmlString], {type : 'image/svg+xml'});
+            var url = URL.createObjectURL(blob);
+            this.href = url;
+
+            var title = document.getElementById("title").innerHTML;
+            var filename = title.replace(/ /g, "-").toLowerCase() + ".svg";
+
+            this.download=filename;
+         }
+         function saveJSON() {
+            var title = document.getElementById("title").innerHTML;
+            var data = {
+               'title': title,
+               'data': []
+            };
+            for (var i = 1; i < 15; i++) {
+               data['data'][i-1] = {
+                  'line': document.getElementById("input-line-" + i).value,
+                  'word-spacing': document.getElementById("word-spacing-line-" + i).value
+               }
+            }
+            var blob = new Blob([JSON.stringify(data)], {type : 'application/json'});
+            var url = URL.createObjectURL(blob);
+            this.href = url;
+
+            var filename = title.replace(/ /g, "-").toLowerCase() + ".json";
+            this.download=filename;
+         }
+         function loadJSON() {
+            var reader = new FileReader();
+            var sonnet, sonnetTitle, lineInput, textLine, wordSpacingInput, wordSpacing;
+            reader.readAsText(this.files[0]);
+            console.log(this.value);
+            this.value = ""; // chrome
+            reader.onload = function() {
+               sonnet = JSON.parse(reader.result);
+               sonnetTitle = document.getElementById("input-title");
+               sonnetTitle.value = sonnet['title'];
+               document.getElementById("title").innerHTML = sonnet['title'];
+               for (var i = 0; i < 14; i++) {
+                  lineInput = document.getElementById("input-line-" + (i+1));
+                  textLine = document.getElementById("text-path-" + (i+1));
+                  lineInput.value = sonnet['data'][i]['line'];
+                  textLine.innerHTML = sonnet['data'][i]['line'];
+
+                  wordSpacing = sonnet['data'][i]['word-spacing'];
+                  wordSpacingInput = document.getElementById("word-spacing-line-" + (i+1));
+                  if (wordSpacing != '') {
+                     wordSpacingInput.value = wordSpacing;
+                     textLine.setAttribute("style", "word-spacing:" + wordSpacing + "px;");
+                  }
+                  else {
+                     wordSpacingInput.value = "";
+                     textLine.setAttribute("style", "word-spacing: 0px;");
+                  }
+
+               }
+            }
+         }
+         function initSonnets() {
+            var lineInput, wordSpacingInput, sonnetTitle, saveAsSVG, saveAsJSON, loadFromJSON, clearSonnet;
+            sonnetTitle = document.getElementById("input-title");
+            sonnetTitle.addEventListener("input", updatePageTitle);
+
+            saveAsSVG = document.getElementById("save-svg");
+            saveAsSVG.addEventListener("click", saveSVG);
+
+            saveAsJSON = document.getElementById("save-json");
+            saveAsJSON.addEventListener("click", saveJSON);
+
+            clearSonnet = document.getElementById("clear");
+            clearSonnet.addEventListener("click", clear);
+
+            loadFromJSON = document.getElementById("file");
+            loadFromJSON.addEventListener("change", loadJSON);
+
+            for (var i = 1; i < 15; i++) {
+               lineInput = document.getElementById("input-line-" + i);
+               lineInput.addEventListener("input", updateLine);
+               wordSpacingInput = document.getElementById("word-spacing-line-" + i);
+               wordSpacingInput.addEventListener("input", updateWordSpacing);
+            }
+         }
+      </script>
+      <!-- Styles -->
+      <style type="text/css">
+         html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #EEE;
+         }
+         body {
+            min-width: 1100px;
+            font-family: Didot;
+         }
+         #jovian-sonnet-generator {
+            background-color: #EEE;
+            width: 1100px;
+            padding: 5px 20px;
+            margin: 0 auto;
+            position: relative;
+         }
+         h1 {
+            text-align: center;
+         }
+         svg {
+            display: inline-block;
+         }
+         form {
+            width: 610px;
+            padding-left: 10px;
+            display: inline-block;
+            vertical-align: top;
+         }
+         form label {
+            display: inline-block;
+            width: 80px;
+            line-height: 1.6em;
+            vertical-align: top;
+            font-weight: bold;
+         }
+         input, textarea {
+            font-family: Didot;
+            font-size: 12px;
+            vertical-align: top;
+            display: inline-block;
+            line-height: 1.5em;
+            border: 1px solid #000;
+            padding: 3px;
+            margin: 3px 3px;
+         }
+         input[type="number"] {
+            width: 90px;
+         }
+         input[type="text"], textarea {
+            width: 400px;
+         }
+         textarea {
+            height: 60px;
+         }
+         input#input-title {
+            width: 504px;
+         }
+         #save-buttons {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            right: 38px;
+            bottom: 20px;
+         }
+         #save-buttons li {
+            display: inline-block;
+         }
+         #save-svg, #save-json, #file-label, #clear {
+            width: auto;
+            color: #FFF;
+            background-color: #000;
+            margin:0;
+            padding: 3px 5px;
+            text-decoration: none;
+            height: 24px;
+            font-weight: normal;
+            border-radius: 5px;
+            cursor: pointer;
+         }
+         #file {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+         }
+      </style>
+   </head>
+   <body>
+   <div id="jovian-sonnet-generator">
+   <h1>Jovian Sonnet Generator</h1>
+  <svg
+   id="sonnet"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.1"
+   width="470"
+   height="600"
+   style="border:1px solid #000; background-color: #FFF;">
+  <text
+       id="title"
+       x="40"
+       y="50"
+       text-anchor="start"
+       style="font-size:16px;font-family:Didot;"></text>
+  <g
+     transform="translate(50,-560)">
+    <path
+       id="path-1"
+       d="M 184.41177,1042.05506 a 175 175 0 1 1 0.00001 0"
+       style="fill:none;" />
+    <path
+       id="path-2"
+       d="M 45.537815,780.03262 C 134.76628,673.27485 241.543,721.19369 334.03926,788.56122"
+       style="fill:none;" />
+    <path
+       id="path-3"
+       d="M 47.052195,792.1098 C 143.43501,706.29104 245.12838,753.26006 337.5249,802.04685"
+       style="fill:none;" />
+    <path
+       id="path-4"
+       d="M 35.085265,807.43627 C 144.97519,772.34713 241.47802,763.1495 341.74951,823.41432"
+       style="fill:none;" />
+    <path
+       id="path-5"
+       d="M 27.575805,821.46806 C 137.38707,800.57737 246.13452,795.65909 347.4116,839.79071"
+       style="fill:none;" />
+    <path
+       id="path-6"
+       d="M 21.577405,845.25681 C 138.20177,820.55808 263.32549,814.26079 354.0507,870.00124"
+       style="fill:none;" />
+    <path
+       id="path-7"
+       d="M 22.422245,865.92528 C 136.50596,856.96017 248.78822,817.50801 352.96929,892.63412"
+       style="fill:none;" />
+    <path
+       id="path-8"
+       d="M 20.220385,890.08775 C 143.1461,858.25812 239.96975,859.7813 346.78625,900.59393"
+       style="fill:none;" />
+    <path
+       id="path-9"
+       d="M 27.975715,908.59621 C 142.89779,906.79688 230.50531,867.23695 340.90851,916.45336"
+       style="fill:none;" />
+    <path
+       id="path-10"
+       d="m 43.359975,917.16764 c 46.31801,12.2016 97.995145,-2.82036 133.959355,-6.42857"
+       style="fill:none;" />
+    <path
+       id="path-11"
+       d="m 36.931395,928.59621 c 45.9562,2.83305 92.639425,15.94196 132.857145,25"
+       style="fill:none;" />
+    <path
+       d="m 40.794205,942.21409 c 21.75005,21.72775 169.125125,38.0047 225.929045,24.90948 m -0.85479,0.0269 c 22.32129,-4.40386 38.76593,-13.61009 42.77138,-24.28096 6.17092,-16.43997 -19.01257,-32.86827 -56.69143,-35.56086 -34.56498,-2.47007 -69.07592,7.86947 -74.58767,23.31826 -5.01674,14.06138 16.63812,28.0873 48.94064,30.25657 29.12613,1.95595 58.14757,-6.81341 62.45611,-19.86812 3.84044,-11.63641 -14.22554,-23.21708 -41.05078,-24.84609 -23.56954,-1.43129 -46.99544,5.73895 -50.05438,16.34996 -2.63845,9.1524 11.76711,18.23668 32.98832,19.29982 17.85826,0.89466 35.56264,-4.64213 37.29598,-12.74537 1.40913,-6.58752 -9.25289,-13.11629 -24.70006,-13.56662 -11.92214,-0.34756 -23.77394,3.51905 -24.01733,9.02342 -0.17215,3.8933 6.68739,7.83051 16.08998,7.53628 5.54843,-0.17362 11.75398,-2.42455 9.78111,-5.12364 -0.84932,-1.16195 -6.08828,-2.59044 -7.01518,-0.65421"
+       style="fill:none;"
+       id="path-12" />
+    <path
+       id="path-13"
+       d="M 35.834525,951.53995 C 129.16087,1021.095 230.56565,992.15418 318.56088,968.93718"
+       style="fill:none;" />
+    <path
+       id="path-14"
+       d="M 48.860255,971.70853 C 132.18053,1045.4408 207.87525,1025.01 296.20593,991.87741"
+       style="fill:none;" />
+
+   <text
+       id="text-1"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-1"
+         xlink:href="#path-1"></textPath></text>
+    <text
+       id="text-2"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-2"
+         xlink:href="#path-2"></textPath></text>
+    <text
+       id="text-3"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-3"
+         xlink:href="#path-3"></textPath></text>
+    <text
+       id="text-4"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-4"
+         xlink:href="#path-4"></textPath></text>
+    <text
+       id="text-5"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-5"
+         xlink:href="#path-5"></textPath></text>
+    <text
+       id="text-6"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-6"
+         xlink:href="#path-6"></textPath></text>
+    <text
+       id="text-7"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-7"
+         xlink:href="#path-7"></textPath></text>
+    <text
+       id="text-8"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-8"
+         xlink:href="#path-8"></textPath></text>
+    <text
+       id="text-9"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-9"
+         xlink:href="#path-9"></textPath></text>
+    <text
+       id="text-10"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-10"
+         xlink:href="#path-10"></textPath></text>
+    <text
+       id="text-11"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-11"
+         xlink:href="#path-11"></textPath></text>
+    <text
+       id="text-12"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-12"
+         xlink:href="#path-12"></textPath></text>
+    <text
+       id="text-13"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-13"
+         xlink:href="#path-13"></textPath></text>
+    <text
+       id="text-14"
+       style="font-size:12px;font-family:Didot;"><textPath
+         id="text-path-14"
+         xlink:href="#path-14"></textPath></text>
+  </g>
+</svg>
+<form>
+   <label for="input-title">Title:</label><input id="input-title" type="text" value="" />
+   <label for="input-line-1">Line 1:</label><textarea id="input-line-1"></textarea><input id="word-spacing-line-1" type="number" value="" step="0.1" />
+   <label for="input-line-2">Line 2:</label><input id="input-line-2" type="text" value="" /><input id="word-spacing-line-2" type="number" value="" step="0.1" />
+   <label for="input-line-3">Line 3:</label><input id="input-line-3" type="text" value="" /><input id="word-spacing-line-3" type="number" value="" step="0.1" />
+   <label for="input-line-4">Line 4:</label><input id="input-line-4" type="text" value="" /><input id="word-spacing-line-4" type="number" value="" step="0.1" />
+   <label for="input-line-5">Line 5:</label><input id="input-line-5" type="text" value="" /><input id="word-spacing-line-5" type="number" value="" step="0.1" />
+   <label for="input-line-6">Line 6:</label><input id="input-line-6" type="text" value="" /><input id="word-spacing-line-6" type="number" value="" step="0.1" />
+   <label for="input-line-7">Line 7:</label><input id="input-line-7" type="text" value="" /><input id="word-spacing-line-7" type="number" value="" step="0.1" />
+   <label for="input-line-8">Line 8:</label><input id="input-line-8" type="text" value="" /><input id="word-spacing-line-8" type="number" value="" step="0.1" />
+   <label for="input-line-9">Line 9:</label><input id="input-line-9" type="text" value="" /><input id="word-spacing-line-9" type="number" value="" step="0.1" />
+   <label for="input-line-10">Line 10:</label><input id="input-line-10" type="text" value="" /><input id="word-spacing-line-10" type="number" value="" step="0.1" />
+   <label for="input-line-11">Line 11:</label><input id="input-line-11" type="text" value="" /><input id="word-spacing-line-11" type="number" value="" step="0.1" />
+   <label for="input-line-12">Line 12:</label><textarea id="input-line-12"></textarea><input id="word-spacing-line-12" type="number" value="" step="0.1" />
+   <label for="input-line-13">Line 13:</label><input id="input-line-13" type="text" value="" /><input id="word-spacing-line-13" type="number" value="" step="0.1" />
+   <label for="input-line-14">Line 14:</label><input id="input-line-14" type="text" value="" /><input id="word-spacing-line-14" type="number" value="" step="0.1" />
+</form>
+<ul id="save-buttons">
+<li><a id="clear" href="#">Clear</a></li>
+<li><a id="save-svg" href="#">Save as SVG</a></li>
+<li><a id="save-json" href="#">Save as JSON</a></li>
+<li><label id="file-label" for="file">Load a Sonnet</label><input type="file" id="file" name="file" accept=".json" /></li>
+</ul>
+   </div>
+   <script type="text/javascript">
+      initSonnets();
+   </script>
+   </body>
+</html>
